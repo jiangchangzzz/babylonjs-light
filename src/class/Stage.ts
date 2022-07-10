@@ -19,6 +19,12 @@ import startFrag from '../shader/start.frag';
 import lambertVert from '../shader/lambert.vert';
 import lambertFrag from '../shader/lambert.frag';
 
+import lambertFragVert from '../shader/lambertFrag.vert';
+import lambertFragFrag from '../shader/lambertFrag.frag';
+
+import halfLambertVert from '../shader/halfLambert.vert';
+import halfLambertFrag from '../shader/halfLambert.frag';
+
 export class Stage {
   engine: Engine;
 
@@ -62,12 +68,16 @@ export class Stage {
   }
 
   createBox() {
-    const box = MeshBuilder.CreateBox("box", { size: 1 }, this.scene);
+    const box = MeshBuilder.CreateCapsule("box", undefined, this.scene);
     box.position.y = 0.5;
 
     // box.material = this.getStart();
 
-    box.material = this.getVertLambert();
+    // box.material = this.getLambertVert();
+
+    // box.material = this.getLambertFrag();
+
+    box.material = this.getHalfLambert();
   }
 
   getStart() {
@@ -81,7 +91,7 @@ export class Stage {
     return material;
   }
 
-  getVertLambert() {
+  getLambertVert() {
     const material = new ShaderMaterial('lambert', this.scene, {
       vertexSource: lambertVert,
       fragmentSource: lambertFrag
@@ -97,9 +107,67 @@ export class Stage {
       ]
     });
     material.setVector3('ambientColor', new Vector3(0, 0, 0));
-    material.setVector3('lightColor', new Vector3(0.5, 0.5, 0.5));
+    material.setVector3('lightColor', new Vector3(1, 1, 1));
     material.setVector3('lightPosition', new Vector3(5, 5, -5));
-    material.setVector4('diffuseColor', new Vector4(1, 0, 0, 1));
+    material.setVector4('diffuseColor', new Vector4(0.5, 0.5, 0.5, 1));
+
+    material.onBindObservable.add(mesh => {
+      const normalMatrix = new Matrix();
+      mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
+      material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+    });
+
+    return material;
+  }
+
+  getLambertFrag() {
+    const material = new ShaderMaterial('lambertFrag', this.scene, {
+      vertexSource: lambertFragVert,
+      fragmentSource: lambertFragFrag
+    }, {
+      attributes: ["position", "normal"],
+      uniforms: [
+        "worldViewProjection",
+        "ambientColor",
+        "lightColor",
+        "lightDir",
+        "diffuseColor",
+        "normalMatrix"
+      ]
+    });
+    material.setVector3('ambientColor', new Vector3(0, 0, 0));
+    material.setVector3('lightColor', new Vector3(1, 1, 1));
+    material.setVector3('lightPosition', new Vector3(5, 5, -5));
+    material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
+
+    material.onBindObservable.add(mesh => {
+      const normalMatrix = new Matrix();
+      mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
+      material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+    });
+
+    return material;
+  }
+
+  getHalfLambert() {
+    const material = new ShaderMaterial('lambertFrag', this.scene, {
+      vertexSource: halfLambertVert,
+      fragmentSource: halfLambertFrag
+    }, {
+      attributes: ["position", "normal"],
+      uniforms: [
+        "worldViewProjection",
+        "ambientColor",
+        "lightColor",
+        "lightDir",
+        "diffuseColor",
+        "normalMatrix"
+      ]
+    });
+    material.setVector3('ambientColor', new Vector3(0, 0, 0));
+    material.setVector3('lightColor', new Vector3(1, 1, 1));
+    material.setVector3('lightPosition', new Vector3(5, 5, -5));
+    material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
 
     material.onBindObservable.add(mesh => {
       const normalMatrix = new Matrix();
