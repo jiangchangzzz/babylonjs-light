@@ -25,6 +25,9 @@ import lambertFragFrag from '../shader/lambertFrag.frag';
 import halfLambertVert from '../shader/halfLambert.vert';
 import halfLambertFrag from '../shader/halfLambert.frag';
 
+import phongVert from '../shader/phong.vert';
+import phongFrag from '../shader/phong.frag';
+
 export class Stage {
   engine: Engine;
 
@@ -77,7 +80,9 @@ export class Stage {
 
     // box.material = this.getLambertFrag();
 
-    box.material = this.getHalfLambert();
+    // box.material = this.getHalfLambert();
+
+    box.material = this.getPhong();
   }
 
   getStart() {
@@ -173,6 +178,41 @@ export class Stage {
       const normalMatrix = new Matrix();
       mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
       material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+    });
+
+    return material;
+  } 
+
+  getPhong() {
+    const material = new ShaderMaterial('lambertFrag', this.scene, {
+      vertexSource: phongVert,
+      fragmentSource: phongFrag
+    }, {
+      attributes: ["position", "normal"],
+      uniforms: [
+        "worldViewProjection",
+        "ambientColor",
+        "lightColor",
+        "lightDir",
+        "diffuseColor",
+        "normalMatrix",
+        "cameraPosition",
+        "specularColor",
+        "gloss"
+      ]
+    });
+    material.setVector3('ambientColor', new Vector3(0, 0, 0));
+    material.setVector3('lightColor', new Vector3(1, 1, 1));
+    material.setVector3('lightPosition', new Vector3(5, 5, -5));
+    material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
+    material.setVector3('specularColor', new Vector3(1, 1, 1));
+    material.setFloat('gloss', 8);
+
+    material.onBindObservable.add(mesh => {
+      const normalMatrix = new Matrix();
+      mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
+      material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+      material.setVector3('cameraPosition', this.camera.position);
     });
 
     return material;
