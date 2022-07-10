@@ -8,10 +8,12 @@ import {
   MeshBuilder,
   ShaderMaterial,
   Vector4,
-  Matrix
+  Matrix,
+  Texture
 } from '@babylonjs/core';
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
+import baseImage from '../image/Brick_Diffuse.jpg';
 
 import startVert from '../shader/start.vert';
 import startFrag from '../shader/start.frag';
@@ -30,6 +32,9 @@ import phongFrag from '../shader/phong.frag';
 
 import blinnPhongVert from '../shader/blinnPhong.vert';
 import blinnPhongFrag from '../shader/blinnPhong.frag';
+
+import baseTextureVert from '../shader/baseTexture.vert';
+import baseTextureFrag from '../shader/baseTexture.frag';
 
 export class Stage {
   engine: Engine;
@@ -87,7 +92,9 @@ export class Stage {
 
     // box.material = this.getPhong();
 
-    box.material = this.getBlinnPhong();
+    // box.material = this.getBlinnPhong();
+
+    box.material = this.getbaseTexture();
   }
 
   getStart() {
@@ -247,6 +254,45 @@ export class Stage {
     material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
     material.setVector3('specularColor', new Vector3(1, 1, 1));
     material.setFloat('gloss', 8);
+
+    material.onBindObservable.add(mesh => {
+      const normalMatrix = new Matrix();
+      mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
+      material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+      material.setVector3('cameraPosition', this.camera.position);
+    });
+
+    return material;
+  }
+
+  getbaseTexture() {
+    const material = new ShaderMaterial('baseTexture', this.scene, {
+      vertexSource: baseTextureVert,
+      fragmentSource: baseTextureFrag
+    }, {
+      attributes: ["position", "normal", "uv"],
+      uniforms: [
+        "worldViewProjection",
+        "ambientColor",
+        "lightColor",
+        "lightDir",
+        "diffuseColor",
+        "normalMatrix",
+        "cameraPosition",
+        "specularColor",
+        "gloss",
+        "baseTexture"
+      ],
+    });
+    material.setVector3('ambientColor', new Vector3(0, 0, 0));
+    material.setVector3('lightColor', new Vector3(1, 1, 1));
+    material.setVector3('lightPosition', new Vector3(5, 5, -5));
+    material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
+    material.setVector3('specularColor', new Vector3(1, 1, 1));
+    material.setFloat('gloss', 8);
+
+    const baseTexture = new Texture(baseImage, this.scene);
+    material.setTexture('baseTexture', baseTexture);
 
     material.onBindObservable.add(mesh => {
       const normalMatrix = new Matrix();
