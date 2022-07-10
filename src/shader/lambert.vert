@@ -1,8 +1,10 @@
 uniform mat4 worldViewProjection;
+uniform mat4 world;
 uniform vec3 ambientColor;
 uniform vec3 lightColor;
-uniform vec3 lightDir;
+uniform vec3 lightPosition;
 uniform vec4 diffuseColor;
+uniform mat3 normalMatrix;
 
 attribute vec3 position;
 attribute vec3 normal;
@@ -11,8 +13,10 @@ varying vec4 color;
 
 void main() {
   gl_Position = worldViewProjection * vec4(position, 1.0);
+  vec3 worldPosition = vec3(world * vec4(position, 1.0));
 
-  vec3 worldNormal = normalize(normal);
-  vec3 diffuse = lightColor * vec3(diffuseColor) * max(0.0, dot(normalize(worldNormal), normalize(lightDir)));
+  vec3 worldNormal = normalize(normalMatrix * normal);
+  vec3 lightDir = normalize(lightPosition - worldPosition);
+  vec3 diffuse = lightColor * vec3(diffuseColor) * max(0.0, dot(worldNormal, lightDir));
   color = vec4(ambientColor + diffuse, diffuseColor.a);
 }

@@ -7,7 +7,8 @@ import {
   HemisphericLight,
   MeshBuilder,
   ShaderMaterial,
-  Vector4
+  Vector4,
+  Matrix
 } from '@babylonjs/core';
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
@@ -92,12 +93,19 @@ export class Stage {
         "lightColor",
         "lightDir",
         "diffuseColor",
+        "normalMatrix"
       ]
     });
     material.setVector3('ambientColor', new Vector3(0, 0, 0));
     material.setVector3('lightColor', new Vector3(0.5, 0.5, 0.5));
-    material.setVector3('lightDir', new Vector3(5, 5, -5));
-    material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
+    material.setVector3('lightPosition', new Vector3(5, 5, -5));
+    material.setVector4('diffuseColor', new Vector4(1, 0, 0, 1));
+
+    material.onBindObservable.add(mesh => {
+      const normalMatrix = new Matrix();
+      mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
+      material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+    });
 
     return material;
   }
