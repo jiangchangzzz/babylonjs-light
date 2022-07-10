@@ -28,6 +28,9 @@ import halfLambertFrag from '../shader/halfLambert.frag';
 import phongVert from '../shader/phong.vert';
 import phongFrag from '../shader/phong.frag';
 
+import blinnPhongVert from '../shader/blinnPhong.vert';
+import blinnPhongFrag from '../shader/blinnPhong.frag';
+
 export class Stage {
   engine: Engine;
 
@@ -82,7 +85,9 @@ export class Stage {
 
     // box.material = this.getHalfLambert();
 
-    box.material = this.getPhong();
+    // box.material = this.getPhong();
+
+    box.material = this.getBlinnPhong();
   }
 
   getStart() {
@@ -155,7 +160,7 @@ export class Stage {
   }
 
   getHalfLambert() {
-    const material = new ShaderMaterial('lambertFrag', this.scene, {
+    const material = new ShaderMaterial('halfLambert', this.scene, {
       vertexSource: halfLambertVert,
       fragmentSource: halfLambertFrag
     }, {
@@ -184,7 +189,7 @@ export class Stage {
   } 
 
   getPhong() {
-    const material = new ShaderMaterial('lambertFrag', this.scene, {
+    const material = new ShaderMaterial('phong', this.scene, {
       vertexSource: phongVert,
       fragmentSource: phongFrag
     }, {
@@ -200,6 +205,41 @@ export class Stage {
         "specularColor",
         "gloss"
       ]
+    });
+    material.setVector3('ambientColor', new Vector3(0, 0, 0));
+    material.setVector3('lightColor', new Vector3(1, 1, 1));
+    material.setVector3('lightPosition', new Vector3(5, 5, -5));
+    material.setVector4('diffuseColor', new Vector4(1, 1, 1, 1));
+    material.setVector3('specularColor', new Vector3(1, 1, 1));
+    material.setFloat('gloss', 8);
+
+    material.onBindObservable.add(mesh => {
+      const normalMatrix = new Matrix();
+      mesh.getWorldMatrix().toNormalMatrix(normalMatrix);
+      material.setMatrix3x3('normalMatrix', Matrix.GetAsMatrix3x3(normalMatrix));
+      material.setVector3('cameraPosition', this.camera.position);
+    });
+
+    return material;
+  }
+
+  getBlinnPhong() {
+    const material = new ShaderMaterial('blinnPhong', this.scene, {
+      vertexSource: blinnPhongVert,
+      fragmentSource: blinnPhongFrag
+    }, {
+      attributes: ["position", "normal"],
+      uniforms: [
+        "worldViewProjection",
+        "ambientColor",
+        "lightColor",
+        "lightDir",
+        "diffuseColor",
+        "normalMatrix",
+        "cameraPosition",
+        "specularColor",
+        "gloss"
+      ],
     });
     material.setVector3('ambientColor', new Vector3(0, 0, 0));
     material.setVector3('lightColor', new Vector3(1, 1, 1));
