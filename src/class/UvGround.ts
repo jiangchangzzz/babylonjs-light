@@ -4,12 +4,19 @@ import {
   Axis,
   ShaderMaterial,
   Texture,
-  Vector2
+  Vector2,
+  Vector4
 } from '@babylonjs/core';
 
 import boomImage from '../image/boom.png';
 import uvAnimationVert from '../shader/uvAnimation.vert';
 import uvAnimationFrag from '../shader/uvAnimation.frag';
+
+import scrollImage1 from '../image/far_background.png'; 
+import scrollImage2 from '../image/near_background.png';
+import uvScrollVert from '../shader/uvScroll.vert';
+import uvScrollFrag from '../shader/uvScroll.frag';
+
 
 export class UvGround {
   scene: Scene;
@@ -20,11 +27,13 @@ export class UvGround {
     const ground = MeshBuilder.CreateSphere(name, undefined, this.scene);
     ground.rotate(Axis.X, Math.PI / 2);
 
-    ground.material = this.getStart();
+    // ground.material = this.getUvFrame();
+
+    ground.material = this.getUvScroll();
   }
 
-  getStart() {
-    const material = new ShaderMaterial('start', this.scene, {
+  getUvFrame() {
+    const material = new ShaderMaterial('uvFrame', this.scene, {
       vertexSource: uvAnimationVert,
       fragmentSource: uvAnimationFrag
     }, {
@@ -57,6 +66,35 @@ export class UvGround {
       offset.y = row / rowNum;
 
       material.setVector2('offset', offset);
+    });
+    return material;
+  }
+
+  getUvScroll() {
+    const material = new ShaderMaterial('uvScroll', this.scene, {
+      vertexSource: uvScrollVert,
+      fragmentSource: uvScrollFrag
+    }, {
+      attributes: ["position", "uv"],
+      uniforms: ["worldViewProjection", "offset"],
+      samplers: ['scrollTexture1', 'scrollTexture2'],
+      // needAlphaBlending: true,
+    });
+
+    const scrollTexture1 = new Texture(scrollImage1, this.scene);
+    material.setTexture('scrollTexture1', scrollTexture1);
+
+    const scrollTexture2 = new Texture(scrollImage2, this.scene);
+    material.setTexture('scrollTexture2', scrollTexture2);
+    
+    const speed = 0.1;
+    let lastTime = 0;
+
+    material.onBindObservable.add(() => {
+      lastTime += this.scene.getEngine().getDeltaTime() * 0.001;
+      const time = lastTime * speed;
+      const offset = new Vector4(-time, 0, time, 0);
+      material.setVector4('offset', offset);
     });
     return material;
   }
